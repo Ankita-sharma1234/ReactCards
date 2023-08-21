@@ -1,23 +1,61 @@
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import axios from 'axios';
+
+function CharacterCard({ character, onClose }) {
+  return (
+    <div className="character-card">
+      <button className="close-button" onClick={() => onClose(character)}>Close</button>
+      <h2>{character.name}</h2>
+      <p>Height: {character.height}</p>
+      <p>Films: {character.films.length}</p>
+    </div>
+  );
+}
 
 function App() {
+  const [characters, setCharacters] = useState([]);
+  const [dispCharacters, setDispCharacters] = useState([]);
+
+  useEffect(() => {
+    axios.get('https://swapi.dev/api/people/')
+      .then(response => {
+        setCharacters(response.data.results);
+        setDispCharacters(response.data.results.slice(0, 3));
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+      });
+  }, []);
+
+  const handleAddCard = () => {
+    if (characters.length > dispCharacters.length) {
+      const nextCharacter = characters[dispCharacters.length];
+      setDispCharacters(prevCharacters => [...prevCharacters, nextCharacter]);
+    }
+  };
+
+  const handleCloseCard = (characterToRemove) => {
+    setDispCharacters(prevCharacters =>
+      prevCharacters.filter(character => character !== characterToRemove)
+    );
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>Star Wars Characters</h1>
+      <div className="character-list">
+        {dispCharacters.map((character, index) => (
+          <CharacterCard
+            key={index}
+            character={character}
+            onClose={handleCloseCard}
+          />
+        ))}
+      </div>
+      {dispCharacters.length < characters.length && (
+        <button className="add-button" onClick={handleAddCard}>Add Card</button>
+      )}
     </div>
   );
 }
